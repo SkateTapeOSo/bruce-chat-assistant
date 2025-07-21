@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bruce Royal Chat Assistant</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #fdf4e5; }
+    #chat { max-width: 700px; margin: auto; border: 1px solid #ccc; padding: 20px; background: #fff; border-radius: 10px; }
+    .msg { margin: 12px 0; }
+    .user { color: #035dee; font-weight: bold; }
+    .ai { color: #222; }
+    input { width: 100%; padding: 12px; margin-top: 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <div class="msg"><span class="ai">🤖 Welcome to the Bruce Royal Chat Assistant. Ask your question below:</span></div>
+  </div>
+  <input id="input" type="text" placeholder="Type your question and press Enter..."/>
+  <script>
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('input');
+    const workerURL = "https://your-worker-name.workers.dev";  // Replace with your actual Worker URL
+
+    async function sendMessage(message) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'msg';
+      msgDiv.innerHTML = '<span class="user">You:</span> ' + message;
+      chat.appendChild(msgDiv);
+
+      const res = await fetch(workerURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: message }]
+        })
+      });
+
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content || "⚠️ Error or no response from assistant.";
+
+      const aiDiv = document.createElement('div');
+      aiDiv.className = 'msg';
+      aiDiv.innerHTML = '<span class="ai">🤖 ' + reply + '</span>';
+      chat.appendChild(aiDiv);
+    }
+
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        const message = input.value.trim();
+        if (message !== "") {
+          sendMessage(message);
+          input.value = "";
+        }
+      }
+    });
+  </script>
+</body>
+</html>
