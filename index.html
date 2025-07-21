@@ -20,7 +20,7 @@
   <script>
     const chat = document.getElementById('chat');
     const input = document.getElementById('input');
-    const workerURL = "https://bruce-gpt-worker.selfmadebiz90.workers.dev/";  // Replace with your actual Worker URL
+    const workerURL = "https://bruce-gpt-worker.selfmadebiz90.workers.dev/";  // Already updated with your live Worker
 
     async function sendMessage(message) {
       const msgDiv = document.createElement('div');
@@ -28,21 +28,35 @@
       msgDiv.innerHTML = '<span class="user">You:</span> ' + message;
       chat.appendChild(msgDiv);
 
-      const res = await fetch(workerURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [{ role: "user", content: message }]
-        })
-      });
+      try {
+        const res = await fetch(workerURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [{ role: "user", content: message }]
+          })
+        });
 
-      const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content || "⚠️ Error or no response from assistant.";
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error("Server responded with: " + errorText);
+        }
 
-      const aiDiv = document.createElement('div');
-      aiDiv.className = 'msg';
-      aiDiv.innerHTML = '<span class="ai">🤖 ' + reply + '</span>';
-      chat.appendChild(aiDiv);
+        const data = await res.json();
+        console.log("OpenAI response:", data);
+
+        const reply = data.choices?.[0]?.message?.content || "⚠️ Assistant did not return a valid message.";
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'msg';
+        aiDiv.innerHTML = '<span class="ai">🤖 ' + reply + '</span>';
+        chat.appendChild(aiDiv);
+      } catch (err) {
+        console.error("Fetch error:", err);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'msg';
+        errorDiv.innerHTML = '<span class="ai">❌ Error: ' + err.message + '</span>';
+        chat.appendChild(errorDiv);
+      }
     }
 
     input.addEventListener("keydown", function(e) {
